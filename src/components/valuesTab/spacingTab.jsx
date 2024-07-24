@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { values } from "@/utils/constants";
 import { useValue } from "@/context/valueContext";
+import { useProject } from "@/context/projectContext";
 
 const predefinedSpacings = [
   "4px",
@@ -20,10 +21,11 @@ const SpacingTab = () => {
   const [spacing, setSpacing] = useState({ id: "", label: "", value: "4px" });
   const [isEditing, setIsEditing] = useState(false);
   const { fetchValue, createValue, editValue } = useValue();
+  const { currentProject } = useProject();
 
   useEffect(() => {
     fetchValue({ value: values.spacing, setValue: setSpacings });
-  }, [fetchValue]);
+  }, [currentProject]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

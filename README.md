@@ -58,10 +58,16 @@ Follow these steps to set up and run the project locally.
 4. **Run Prisma Migrations**
 
    ```bash
-   npx prisma migrate dev
+   npm db-migrate
    ```
 
-5. **Start the Development Server**
+5. **Generate Prisma Schema types**
+
+   ```bash
+   npm generate
+   ```
+
+6. **Start the Development Server**
 
    ```bash
    npm run dev

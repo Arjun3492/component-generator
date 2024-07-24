@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { values } from "@/utils/constants";
 import { useValue } from "@/context/valueContext";
+import { useProject } from "@/context/projectContext";
 
 const predefinedRadii = [
   "2px",
@@ -20,11 +21,11 @@ const RadiusTab = () => {
   const [radius, setRadius] = useState({ id: "", label: "", value: "2px" });
   const [isEditing, setIsEditing] = useState(false);
   const { fetchValue, createValue, editValue } = useValue();
+  const { currentProject } = useProject();
 
   useEffect(() => {
     fetchValue({ value: values.radius, setValue: setRadii });
-    console.log("radii", radii);
-  }, [fetchValue]);
+  }, [currentProject]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
