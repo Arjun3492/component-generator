@@ -5,9 +5,14 @@ const ValueContext = createContext();
 
 export const ValueProvider = ({ children }) => {
 
-    const { currentProject, updateCacheWithEditedValue } = useProject();
+    const { currentProject, updateCacheWithEditedValue, setCache } = useProject();
 
     const [valueCache, setValueCache] = useState({});
+    const map = {
+        color: "colors",
+        radius: "radii",
+        spacing: "spacings",
+    };
 
     const fetchValue = async ({
         value,
@@ -29,6 +34,7 @@ export const ValueProvider = ({ children }) => {
 
     const createValue = async ({ value, currentValue,
         setValue, newValue, setNewValue }) => {
+
         const res = await fetch(`/api/value?type=${value}&projectId=${currentProject.id}`, {
             method: "POST",
             headers: {
@@ -36,11 +42,22 @@ export const ValueProvider = ({ children }) => {
             },
             body: JSON.stringify(newValue),
         });
+        if (!res.ok) {
+            console.error("Failed to create value", await res.json());
+            return;
+        }
+
         const data = await res.json();
+
 
         setValue([...currentValue, data]);
         setValueCache({ ...valueCache, [`${currentProject.id}-${value}`]: [...currentValue, data] });
         setNewValue({ label: "", value: "" });
+
+        setCache((prevCache) => ({
+            ...prevCache,
+            [map[value]]: [...currentValue, data],
+        }));
     }
 
     const editValue = async ({ value, id, currentValue, setValue, newValue, setNewValue }) => {
@@ -52,6 +69,10 @@ export const ValueProvider = ({ children }) => {
                 },
                 body: JSON.stringify(newValue),
             });
+            if (!res.ok) {
+                console.error("Failed to edit value", await res.json());
+                return;
+            }
             const data = await res.json();
 
             const updatedValues = currentValue.map((item) => {
@@ -64,6 +85,7 @@ export const ValueProvider = ({ children }) => {
             setValue(updatedValues);
             setValueCache({ ...valueCache, [`${currentProject.id}-${value}`]: updatedValues });
             setNewValue({ label: "", value: "" });
+            setCache({ ...currentProject, [map[value]]: updatedValues });
 
             updateCacheWithEditedValue(data, value);
 
