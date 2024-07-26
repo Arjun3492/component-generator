@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useProject } from "@/context/projectContext";
-import { inputSubTabs } from "@/utils/constants";
+import { inputSubComponents } from "@/utils/constants";
 import { useComponent } from "@/context/componentContext";
 
 const TextInputTab = () => {
@@ -28,7 +28,7 @@ const TextInputTab = () => {
   const fetchInputs = useCallback(async () => {
     try {
       const data = await fetchProjectWithAttributes({
-        type: inputSubTabs.text,
+        type: inputSubComponents.text,
       });
       setCurrentProject(data);
     } catch (error) {
@@ -44,7 +44,7 @@ const TextInputTab = () => {
     try {
       setLoading(true);
       await createComponent({
-        type: inputSubTabs.text,
+        type: inputSubComponents.text,
         variant: inputName,
         styles,
         components: currentProject.components,
@@ -67,7 +67,7 @@ const TextInputTab = () => {
       );
       await editComponent({
         id: inputToEdit.id,
-        type: inputSubTabs.text,
+        type: inputSubComponents.text,
         variant: inputName,
         styles,
         components: currentProject.components,

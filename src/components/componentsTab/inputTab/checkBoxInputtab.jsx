@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { useProject } from "@/context/projectContext";
-import { inputSubTabs } from "@/utils/constants";
+import { inputSubComponents } from "@/utils/constants";
 import { useComponent } from "@/context/componentContext";
 
 const CheckboxInputTab = () => {
@@ -33,7 +33,7 @@ const CheckboxInputTab = () => {
   const fetchCheckboxes = useCallback(async () => {
     try {
       const data = await fetchProjectWithAttributes({
-        type: inputSubTabs.checkbox,
+        type: inputSubComponents.checkbox,
       });
       if (data) {
         setCurrentProject(data);
@@ -51,7 +51,7 @@ const CheckboxInputTab = () => {
     try {
       setLoading(true);
       await createComponent({
-        type: inputSubTabs.checkbox,
+        type: inputSubComponents.checkbox,
         variant: checkboxName,
         styles,
         components: currentProject.components,
@@ -73,7 +73,7 @@ const CheckboxInputTab = () => {
         id: currentProject.components.find(
           (checkbox) => checkbox.variant === checkboxName
         ).id,
-        type: inputSubTabs.checkbox,
+        type: inputSubComponents.checkbox,
         variant: checkboxName,
         styles,
         components: currentProject.components,

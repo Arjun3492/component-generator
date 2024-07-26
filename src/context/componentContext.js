@@ -6,6 +6,8 @@ const ComponentContext = createContext();
 export const ComponentProvider = ({ children }) => {
     const { currentProject } = useProject();
 
+
+
     const createComponent = useCallback(async ({ type, variant, styles, setCurrentProject }) => {
         try {
             const res = await fetch(`/api/component?type=${type}&projectId=${currentProject.id}`, {

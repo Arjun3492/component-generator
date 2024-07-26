@@ -12,7 +12,7 @@ export const components = {
     select: "select"
 }
 
-export const inputSubTabs = {
+export const inputSubComponents = {
     text: "text_input",
     radio: "radio_input",
     checkbox: "checkbox_input"

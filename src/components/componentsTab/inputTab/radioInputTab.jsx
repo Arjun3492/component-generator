@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useProject } from "@/context/projectContext";
-import { inputSubTabs } from "@/utils/constants";
+import { inputSubComponents } from "@/utils/constants";
 import { useComponent } from "@/context/componentContext";
 
 const RadioInputTab = () => {
@@ -29,7 +29,7 @@ const RadioInputTab = () => {
   const fetchRadios = useCallback(async () => {
     try {
       const data = await fetchProjectWithAttributes({
-        type: inputSubTabs.radio,
+        type: inputSubComponents.radio,
       });
       if (data) {
         setCurrentProject(data);
@@ -47,7 +47,7 @@ const RadioInputTab = () => {
     try {
       setLoading(true);
       await createComponent({
-        type: inputSubTabs.radio,
+        type: inputSubComponents.radio,
         variant: radioName,
         styles,
         components: currentProject.components,
@@ -71,7 +71,7 @@ const RadioInputTab = () => {
       if (radioToEdit) {
         await editComponent({
           id: radioToEdit.id,
-          type: inputSubTabs.radio,
+          type: inputSubComponents.radio,
           variant: radioName,
           styles,
           components: currentProject.components,
