@@ -4,7 +4,9 @@ import { useProject } from "./projectContext";
 const ComponentContext = createContext();
 
 export const ComponentProvider = ({ children }) => {
-    const { currentProject } = useProject();
+    const { currentProject, setCache } = useProject();
+
+
 
     const createComponent = useCallback(async ({ type, variant, styles, setCurrentProject }) => {
         try {
@@ -21,6 +23,7 @@ export const ComponentProvider = ({ children }) => {
                     ...prevCurrentProject,
                     components: [...prevCurrentProject.components, data]
                 }));
+                setCache(currentProject);
             } else {
                 console.error("Failed to create component", data);
             }
@@ -46,6 +49,8 @@ export const ComponentProvider = ({ children }) => {
                         component.id === id ? { ...component, styles: data } : component
                     )
                 }));
+                setCache(currentProject);
+
             } else {
                 console.error("Failed to edit component", data);
             }
