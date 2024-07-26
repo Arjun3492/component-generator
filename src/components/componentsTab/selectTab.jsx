@@ -39,7 +39,7 @@ const SelectTab = () => {
         acc[radius.id] = radius.value;
         return acc;
       }, {}),
-      spacingMap: currentProject.spacingss.reduce((acc, spacing) => {
+      spacingMap: currentProject.spacings.reduce((acc, spacing) => {
         acc[spacing.id] = spacing.value;
         return acc;
       }, {}),
@@ -312,7 +312,7 @@ const SelectTab = () => {
                 <option value="" hidden disabled>
                   Select horizontal padding
                 </option>
-                {currentProject.spacingss.map((spacing) => (
+                {currentProject.spacings.map((spacing) => (
                   <option key={spacing.id} value={spacing.id}>
                     {spacing.label}
                   </option>
@@ -331,7 +331,7 @@ const SelectTab = () => {
                 <option value="" hidden disabled>
                   Select vertical padding
                 </option>
-                {currentProject.spacingss.map((spacing) => (
+                {currentProject.spacings.map((spacing) => (
                   <option key={spacing.id} value={spacing.id}>
                     {spacing.label}
                   </option>
