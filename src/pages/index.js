@@ -4,7 +4,7 @@ import ValuesTab from "@/components/valuesTab";
 import ComponentsTab from "@/components/componentsTab";
 import { useProject } from "@/context/projectContext";
 import Header from "@/components/header";
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth";
 
 const Page = () => {
   const [selectedTab, setSelectedTab] = useState(tabs.values);
@@ -52,8 +52,9 @@ const Page = () => {
 
 export default Page;
 
-export async function getServerSideProps(context) {
-  const session = await getSession(context);
+export async function getServerSideProps({ req, res }) {
+  const session = await getServerSession(req, res);
+
   if (!session) {
     return {
       redirect: {
@@ -64,6 +65,7 @@ export async function getServerSideProps(context) {
   }
 
   return {
-    props: { session },
+    props: {},
   };
 }
+

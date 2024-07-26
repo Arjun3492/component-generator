@@ -6,8 +6,7 @@ const ComponentContext = createContext();
 export const ComponentProvider = ({ children }) => {
     const { currentProject } = useProject();
 
-    // Use useCallback to memoize the functions
-    const createComponent = useCallback(async ({ type, variant, styles, components, setComponents, setCurrentProject }) => {
+    const createComponent = useCallback(async ({ type, variant, styles, setCurrentProject }) => {
         try {
             const res = await fetch(`/api/component?type=${type}&projectId=${currentProject.id}`, {
                 method: "POST",
@@ -22,7 +21,6 @@ export const ComponentProvider = ({ children }) => {
                     ...prevCurrentProject,
                     components: [...prevCurrentProject.components, data]
                 }));
-                // setComponents(prevComponents => [...prevComponents, data]);
             } else {
                 console.error("Failed to create component", data);
             }
@@ -31,7 +29,7 @@ export const ComponentProvider = ({ children }) => {
         }
     }, [currentProject]);
 
-    const editComponent = useCallback(async ({ id, variant, type, styles, components, setComponents, setCurrentProject }) => {
+    const editComponent = useCallback(async ({ id, variant, type, styles, setCurrentProject }) => {
         try {
             const res = await fetch(`/api/component?type=${type}&projectId=${currentProject.id}`, {
                 method: "PUT",
@@ -48,11 +46,6 @@ export const ComponentProvider = ({ children }) => {
                         component.id === id ? { ...component, styles: data } : component
                     )
                 }));
-                // setComponents(prevComponents =>
-                //     prevComponents.map(component =>
-                //         component.id === id ? { ...component, styles: data } : component
-                //     )
-                // );
             } else {
                 console.error("Failed to edit component", data);
             }

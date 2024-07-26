@@ -35,33 +35,35 @@ model Project {
 }
 
 model Color {
-  id        Int     @id @default(autoincrement())
-  label     String
-  value     String
-  projectId Int
-  project   Project @relation(fields: [projectId], references: [id])
+  id                    Int              @id @default(autoincrement())
+  label                 String
+  value                 String
+  projectId             Int
+  project               Project          @relation(fields: [projectId], references: [id])
+  componentStylesBg     ComponentStyle[] @relation("BgColor")
+  componentStylesText   ComponentStyle[] @relation("TextColor")
+  componentStylesBorder ComponentStyle[] @relation("BorderColor")
 
   @@map("color")
 }
 
 model Radius {
-  id        Int     @id @default(autoincrement())
-  label     String
-  value     String
-  projectId Int
-  project   Project @relation(fields: [projectId], references: [id])
-
-  @@map("radius")
+  id              Int              @id @default(autoincrement())
+  label           String
+  value           String
+  projectId       Int
+  project         Project          @relation(fields: [projectId], references: [id])
+  componentStyles ComponentStyle[]
 }
 
 model Spacing {
-  id        Int     @id @default(autoincrement())
-  label     String
-  value     String
-  projectId Int
-  project   Project @relation(fields: [projectId], references: [id])
-
-  @@map("spacing")
+  id                      Int              @id @default(autoincrement())
+  label                   String
+  value                   String
+  projectId               Int
+  project                 Project          @relation(fields: [projectId], references: [id])
+  componentStylesPaddingX ComponentStyle[] @relation("PaddingX")
+  componentStylesPaddingY ComponentStyle[] @relation("PaddingY")
 }
 
 model Component {
@@ -79,13 +81,19 @@ model Component {
 model ComponentStyle {
   id              Int       @id @default(autoincrement())
   componentId     Int       @unique
-  backgroundColor String
-  textColor       String
-  borderColor     String
-  borderRadius    String
-  paddingX        String
-  paddingY        String
+  backgroundColor Int
+  textColor       Int
+  borderColor     Int
+  borderRadius    Int
+  paddingX        Int
+  paddingY        Int
   component       Component @relation(fields: [componentId], references: [id])
+  bgColor         Color     @relation("BgColor", fields: [backgroundColor], references: [id])
+  txtColor        Color     @relation("TextColor", fields: [textColor], references: [id])
+  brdrColor       Color     @relation("BorderColor", fields: [borderColor], references: [id])
+  radius          Radius    @relation(fields: [borderRadius], references: [id])
+  pdX             Spacing   @relation("PaddingX", fields: [paddingX], references: [id])
+  pdY             Spacing   @relation("PaddingY", fields: [paddingY], references: [id])
 
   @@map("component_style")
 }

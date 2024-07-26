@@ -10,7 +10,8 @@
     "db-format": "prisma format",
     "db-migrate": "prisma migrate dev ",
     "generate": " prisma generate",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "reset": "prisma migrate reset --force"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",

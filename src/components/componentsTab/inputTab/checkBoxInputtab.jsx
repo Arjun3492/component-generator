@@ -1,18 +1,22 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useProject } from "@/context/projectContext";
 import { inputSubTabs } from "@/utils/constants";
 import { useComponent } from "@/context/componentContext";
 
 const CheckboxInputTab = () => {
   const dummyOptions = ["Option 1", "Option 2", "Option 3"];
-  const defaultStyles = {
-    backgroundColor: "",
-    textColor: "",
-    borderColor: "",
-    borderRadius: "",
-    paddingX: "",
-    paddingY: "",
-  };
+  const defaultStyles = useMemo(
+    () => ({
+      backgroundColor: "",
+      textColor: "",
+      borderColor: "",
+      borderRadius: "",
+      paddingX: "",
+      paddingY: "",
+    }),
+    []
+  );
+
   const [styles, setStyles] = useState(defaultStyles);
   const [currentProject, setCurrentProject] = useState(null);
   const [checkboxName, setCheckboxName] = useState("");
@@ -21,10 +25,10 @@ const CheckboxInputTab = () => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const handleStyleChange = (e) => {
+  const handleStyleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setStyles({ ...styles, [name]: value });
-  };
+    setStyles((prevStyles) => ({ ...prevStyles, [name]: value }));
+  }, []);
 
   const fetchCheckboxes = useCallback(async () => {
     try {
@@ -37,7 +41,7 @@ const CheckboxInputTab = () => {
     } catch (error) {
       console.error(error);
     }
-  }, [fetchProjectWithAttributes, setCurrentProject]);
+  }, [fetchProjectWithAttributes]);
 
   useEffect(() => {
     fetchCheckboxes();
@@ -55,9 +59,9 @@ const CheckboxInputTab = () => {
       });
       setStyles(defaultStyles);
       setCheckboxName("");
-      setLoading(false);
     } catch (error) {
       console.error(error);
+    } finally {
       setLoading(false);
     }
   };
@@ -75,12 +79,12 @@ const CheckboxInputTab = () => {
         components: currentProject.components,
         setCurrentProject,
       });
-      setLoading(false);
       setStyles(defaultStyles);
       setCheckboxName("");
       setIsEditing(false);
     } catch (error) {
       console.error(error);
+    } finally {
       setLoading(false);
     }
   };
@@ -93,12 +97,7 @@ const CheckboxInputTab = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    isEditing ? handleEditCheckbox() : handleCreateCheckbox();
-  };
-
-  const handleOptionChange = (index, value) => {
-    const newOptions = [...options];
-    newOptions[index] = value;
+    isEditing ? await handleEditCheckbox() : await handleCreateCheckbox();
   };
 
   return (
@@ -245,7 +244,7 @@ const CheckboxInputTab = () => {
                 <option value="" disabled hidden>
                   Select a border radius
                 </option>
-                {currentProject.radius.map((radius) => (
+                {currentProject.radii.map((radius) => (
                   <option key={radius.id} value={radius.value}>
                     {radius.label}
                   </option>
@@ -263,7 +262,7 @@ const CheckboxInputTab = () => {
                 <option value="" disabled hidden>
                   Select horizontal padding
                 </option>
-                {currentProject.spacing.map((spacing) => (
+                {currentProject.spacings.map((spacing) => (
                   <option key={spacing.id} value={spacing.value}>
                     {spacing.label}
                   </option>
@@ -281,14 +280,13 @@ const CheckboxInputTab = () => {
                 <option value="" disabled hidden>
                   Select vertical padding
                 </option>
-                {currentProject.spacing.map((spacing) => (
+                {currentProject.spacings.map((spacing) => (
                   <option key={spacing.id} value={spacing.value}>
                     {spacing.label}
                   </option>
                 ))}
               </select>
             </div>
-
             <div>
               <button
                 type="submit"

@@ -1,4 +1,5 @@
-import { getSession, signIn } from "next-auth/react";
+import { getServerSession } from "next-auth";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -16,7 +17,6 @@ export default function Signin() {
         password,
       });
       if (res.ok) {
-        console.log("Signin successful");
         window.location.href = "/";
       } else {
         alert("Invalid email or password");
@@ -78,8 +78,9 @@ export default function Signin() {
   );
 }
 
-export async function getServerSideProps(context) {
-  const session = await getSession(context);
+export async function getServerSideProps({ req, res }) {
+  const session = await getServerSession(req, res);
+
   if (session) {
     return {
       redirect: {

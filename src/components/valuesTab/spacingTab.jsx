@@ -49,7 +49,7 @@ const SpacingTab = () => {
           setNewValue: setSpacing,
         });
       }
-      setSpacing({ id: "", label: "", value: "4px" }); // Reset form
+      setSpacing({ id: "", label: "", value: "4px" });
     } catch (error) {
       console.error("Error submitting spacing:", error);
     }

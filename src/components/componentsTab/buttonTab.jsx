@@ -1,29 +1,60 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useProject } from "@/context/projectContext";
 import { components } from "@/utils/constants";
 import { useComponent } from "@/context/componentContext";
 
 const ButtonTab = () => {
-  const defaultStyles = {
-    backgroundColor: "",
-    textColor: "",
-    borderColor: "",
-    borderRadius: "",
-    paddingX: "",
-    paddingY: "",
+  const defaultButtonData = {
+    backgroundColor: -1,
+    textColor: -1,
+    borderColor: -1,
+    borderRadius: -1,
+    paddingX: -1,
+    paddingY: -1,
+    buttonName: "",
   };
-  const [styles, setStyles] = useState(defaultStyles);
+
+  const [buttonData, setButtonData] = useState(defaultButtonData);
   const [currentProject, setCurrentProject] = useState(null);
-  const [buttonName, setButtonName] = useState("");
   const { fetchProjectWithAttributes } = useProject();
   const { createComponent, editComponent } = useComponent();
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const handleStyleChange = (e) => {
-    const { name, value } = e.target;
-    setStyles({ ...styles, [name]: value });
-  };
+  const { colorMap, radiusMap, spacingMap } = useMemo(() => {
+    if (!currentProject) return {};
+    return {
+      colorMap: currentProject.colors
+        ? currentProject.colors.reduce((acc, color) => {
+            acc[color.id] = color.value;
+            return acc;
+          }, {})
+        : {},
+      radiusMap: currentProject.radii
+        ? currentProject.radii.reduce((acc, radius) => {
+            acc[radius.id] = radius.value;
+            return acc;
+          }, {})
+        : {},
+      spacingMap: currentProject.spacingss
+        ? currentProject.spacingss.reduce((acc, spacing) => {
+            acc[spacing.id] = spacing.value;
+            return acc;
+          }, {})
+        : {},
+    };
+  }, [currentProject]);
+
+  const handleStyleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      setButtonData((prev) => ({
+        ...prev,
+        [name]: Number(value),
+      }));
+    },
+    [setButtonData]
+  );
 
   const fetchButtons = useCallback(async () => {
     try {
@@ -36,7 +67,7 @@ const ButtonTab = () => {
     } catch (error) {
       console.error(error);
     }
-  }, [fetchProjectWithAttributes, setCurrentProject]);
+  }, [fetchProjectWithAttributes]);
 
   useEffect(() => {
     fetchButtons();
@@ -47,13 +78,12 @@ const ButtonTab = () => {
       setLoading(true);
       await createComponent({
         type: components.button,
-        variant: buttonName,
-        styles,
+        variant: buttonData.buttonName,
+        styles: buttonData,
         components: currentProject.components,
         setCurrentProject,
       });
-      setStyles(defaultStyles);
-      setButtonName("");
+      setButtonData(defaultButtonData);
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -64,19 +94,19 @@ const ButtonTab = () => {
   const handleEditButton = async () => {
     try {
       setLoading(true);
+
       await editComponent({
         id: currentProject.components.find(
-          (button) => button.variant === buttonName
+          (button) => button.variant === buttonData.buttonName
         ).id,
         type: components.button,
-        variant: buttonName,
-        styles,
+        variant: buttonData.buttonName,
+        styles: buttonData,
         components: currentProject.components,
         setCurrentProject,
       });
       setLoading(false);
-      setStyles(defaultStyles);
-      setButtonName("");
+      setButtonData(defaultButtonData);
       setIsEditing(false);
     } catch (error) {
       console.error(error);
@@ -85,8 +115,10 @@ const ButtonTab = () => {
   };
 
   const handleOnClickEdit = (button) => {
-    setButtonName(button.variant);
-    setStyles(button.styles);
+    setButtonData({
+      buttonName: button.variant,
+      ...button.styles,
+    });
     setIsEditing(true);
   };
 
@@ -109,11 +141,11 @@ const ButtonTab = () => {
                 >
                   <button
                     style={{
-                      backgroundColor: button.styles.backgroundColor,
-                      color: button.styles.textColor,
-                      borderColor: button.styles.borderColor,
-                      borderRadius: button.styles.borderRadius,
-                      padding: `${button.styles.paddingY} ${button.styles.paddingX}`,
+                      backgroundColor: button.styles.bgColor.value,
+                      color: button.styles.txtColor.value,
+                      borderColor: button.styles.brdrColor.value,
+                      borderRadius: button.styles.radius.value,
+                      padding: `${button.styles.pdY.value} ${button.styles.pdX.value}`,
                     }}
                     className="border"
                   >
@@ -133,15 +165,36 @@ const ButtonTab = () => {
           <div className="mb-6">
             <button
               style={{
-                backgroundColor: styles.backgroundColor,
-                color: styles.textColor,
-                borderColor: styles.borderColor,
-                borderRadius: styles.borderRadius,
-                padding: `${styles.paddingY} ${styles.paddingX}`,
+                backgroundColor:
+                  buttonData.backgroundColor === -1
+                    ? "#f0f0f0"
+                    : colorMap[buttonData.backgroundColor],
+
+                color:
+                  buttonData.textColor === -1
+                    ? "#000000"
+                    : colorMap[buttonData.textColor],
+                borderColor:
+                  buttonData.borderColor === -1
+                    ? "#f0f0f0"
+                    : colorMap[buttonData.borderColor],
+                borderRadius:
+                  buttonData.borderRadius === -1
+                    ? 0
+                    : radiusMap[buttonData.borderRadius],
+                padding: `${
+                  buttonData.paddingY === -1
+                    ? 0
+                    : spacingMap[buttonData.paddingY]
+                } ${
+                  buttonData.paddingX === -1
+                    ? 0
+                    : spacingMap[buttonData.paddingX]
+                }`,
               }}
               className="border"
             >
-              {buttonName || "Button Preview"}
+              {buttonData.buttonName || "Button Preview"}
             </button>
           </div>
           <form
@@ -152,8 +205,11 @@ const ButtonTab = () => {
               <label className="block mb-2">Button Name</label>
               <input
                 type="text"
-                value={buttonName}
-                onChange={(e) => setButtonName(e.target.value)}
+                name="buttonName"
+                value={buttonData.buttonName}
+                onChange={(e) =>
+                  setButtonData({ ...buttonData, buttonName: e.target.value })
+                }
                 required
                 readOnly={isEditing}
                 className="w-full px-4 py-2 border rounded-md"
@@ -163,15 +219,20 @@ const ButtonTab = () => {
               <label className="block mb-2">Background Color</label>
               <select
                 name="backgroundColor"
-                value={styles.backgroundColor}
+                required
+                value={
+                  buttonData.backgroundColor === -1
+                    ? ""
+                    : buttonData.backgroundColor
+                }
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
-                <option value="" disabled hidden>
+                <option value="" hidden disabled>
                   Select a color
                 </option>
                 {currentProject.colors.map((color) => (
-                  <option key={color.id} value={color.value}>
+                  <option key={color.id} value={color.id}>
                     {color.label}
                   </option>
                 ))}
@@ -181,15 +242,16 @@ const ButtonTab = () => {
               <label className="block mb-2">Text Color</label>
               <select
                 name="textColor"
-                value={styles.textColor}
+                required
+                value={buttonData.textColor === -1 ? "" : buttonData.textColor}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
-                <option value="" disabled hidden>
+                <option value="" hidden disabled>
                   Select a text color
                 </option>
                 {currentProject.colors.map((color) => (
-                  <option key={color.id} value={color.value}>
+                  <option key={color.id} value={color.id}>
                     {color.label}
                   </option>
                 ))}
@@ -199,15 +261,18 @@ const ButtonTab = () => {
               <label className="block mb-2">Border Color</label>
               <select
                 name="borderColor"
-                value={styles.borderColor}
+                value={
+                  buttonData.borderColor === -1 ? "" : buttonData.borderColor
+                }
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
+                required
               >
                 <option value="" disabled hidden>
                   Select a border color
                 </option>
                 {currentProject.colors.map((color) => (
-                  <option key={color.id} value={color.value}>
+                  <option key={color.id} value={color.id}>
                     {color.label}
                   </option>
                 ))}
@@ -217,15 +282,18 @@ const ButtonTab = () => {
               <label className="block mb-2">Border Radius</label>
               <select
                 name="borderRadius"
-                value={styles.borderRadius}
+                value={
+                  buttonData.borderRadius === -1 ? "" : buttonData.borderRadius
+                }
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
+                required
               >
                 <option value="" disabled hidden>
                   Select a border radius
                 </option>
-                {currentProject.radius.map((radius) => (
-                  <option key={radius.id} value={radius.value}>
+                {currentProject.radii.map((radius) => (
+                  <option key={radius.id} value={radius.id}>
                     {radius.label}
                   </option>
                 ))}
@@ -235,15 +303,16 @@ const ButtonTab = () => {
               <label className="block mb-2">Padding X</label>
               <select
                 name="paddingX"
-                value={styles.paddingX}
+                value={buttonData.paddingX === -1 ? "" : buttonData.paddingX}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
+                required
               >
                 <option value="" disabled hidden>
                   Select horizontal padding
                 </option>
-                {currentProject.spacing.map((spacing) => (
-                  <option key={spacing.id} value={spacing.value}>
+                {currentProject.spacingss.map((spacing) => (
+                  <option key={spacing.id} value={spacing.id}>
                     {spacing.label}
                   </option>
                 ))}
@@ -253,15 +322,16 @@ const ButtonTab = () => {
               <label className="block mb-2">Padding Y</label>
               <select
                 name="paddingY"
-                value={styles.paddingY}
+                value={buttonData.paddingY === -1 ? "" : buttonData.paddingY}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
+                required
               >
                 <option value="" disabled hidden>
                   Select vertical padding
                 </option>
-                {currentProject.spacing.map((spacing) => (
-                  <option key={spacing.id} value={spacing.value}>
+                {currentProject.spacingss.map((spacing) => (
+                  <option key={spacing.id} value={spacing.id}>
                     {spacing.label}
                   </option>
                 ))}

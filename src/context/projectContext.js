@@ -1,4 +1,3 @@
-import { components } from "@/utils/constants";
 import { createContext, useContext, useEffect, useState } from "react";
 
 const ProjectContext = createContext();
@@ -56,8 +55,8 @@ export const ProjectProvider = ({ children }) => {
                 const data = await res.json();
                 if (res.ok) {
                     return {
-                        spacing: data.spacings,
-                        radius: data.radii,
+                        spacings: data.spacings,
+                        radii: data.radii,
                         colors: data.colors,
                         components: data.components.filter((component) => component.type === type),
                     };

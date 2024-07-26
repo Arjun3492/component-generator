@@ -22,7 +22,7 @@ const TextInputTab = () => {
 
   const handleStyleChange = (e) => {
     const { name, value } = e.target;
-    setStyles({ ...styles, [name]: value });
+    setStyles((prevStyles) => ({ ...prevStyles, [name]: value }));
   };
 
   const fetchInputs = useCallback(async () => {
@@ -30,13 +30,11 @@ const TextInputTab = () => {
       const data = await fetchProjectWithAttributes({
         type: inputSubTabs.text,
       });
-      if (data) {
-        setCurrentProject(data);
-      }
+      setCurrentProject(data);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to fetch inputs:", error);
     }
-  }, [fetchProjectWithAttributes, setCurrentProject]);
+  }, [fetchProjectWithAttributes]);
 
   useEffect(() => {
     fetchInputs();
@@ -54,9 +52,9 @@ const TextInputTab = () => {
       });
       setStyles(defaultStyles);
       setInputName("");
-      setLoading(false);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to create input:", error);
+    } finally {
       setLoading(false);
     }
   };
@@ -64,22 +62,23 @@ const TextInputTab = () => {
   const handleEditInput = async () => {
     try {
       setLoading(true);
+      const inputToEdit = currentProject.components.find(
+        (input) => input.variant === inputName
+      );
       await editComponent({
-        id: currentProject.components.find(
-          (input) => input.variant === inputName
-        ).id,
+        id: inputToEdit.id,
         type: inputSubTabs.text,
         variant: inputName,
         styles,
         components: currentProject.components,
         setCurrentProject,
       });
-      setLoading(false);
+      setIsEditing(false);
       setStyles(defaultStyles);
       setInputName("");
-      setIsEditing(false);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to edit input:", error);
+    } finally {
       setLoading(false);
     }
   };
@@ -90,7 +89,7 @@ const TextInputTab = () => {
     setIsEditing(true);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     isEditing ? handleEditInput() : handleCreateInput();
   };
@@ -120,11 +119,11 @@ const TextInputTab = () => {
                     className="border"
                   />
                   <button
-                    className=" border-none"
+                    className="border-none"
                     onClick={() => handleOnClickEdit(input)}
                   >
                     ✎
-                  </button>{" "}
+                  </button>
                 </div>
               ))}
             </div>
@@ -224,7 +223,7 @@ const TextInputTab = () => {
                 <option value="" disabled hidden>
                   Select a border radius
                 </option>
-                {currentProject.radius.map((radius) => (
+                {currentProject.radii.map((radius) => (
                   <option key={radius.id} value={radius.value}>
                     {radius.label}
                   </option>
@@ -242,7 +241,7 @@ const TextInputTab = () => {
                 <option value="" disabled hidden>
                   Select horizontal padding
                 </option>
-                {currentProject.spacing.map((spacing) => (
+                {currentProject.spacings.map((spacing) => (
                   <option key={spacing.id} value={spacing.value}>
                     {spacing.label}
                   </option>
@@ -260,11 +259,13 @@ const TextInputTab = () => {
                 <option value="" disabled hidden>
                   Select vertical padding
                 </option>
-                {currentProject.spacing.map((spacing) => (
-                  <option key={spacing.id} value={spacing.value}>
-                    {spacing.label}
-                  </option>
-                ))}
+                {currentProject &&
+                  currentProject.spacings &&
+                  currentProject.spacings.map((spacing) => (
+                    <option key={spacing.id} value={spacing.value}>
+                      {spacing.label}
+                    </option>
+                  ))}
               </select>
             </div>
             <div>
@@ -278,8 +279,8 @@ const TextInputTab = () => {
                     ? "Editing..."
                     : "Creating..."
                   : isEditing
-                  ? "Edit Input"
-                  : "Create Input"}
+                  ? "Edit Text Input"
+                  : "Create Text Input"}
               </button>
             </div>
           </form>

@@ -29,7 +29,17 @@ export const handler = async (req, res) => {
                     spacings: true,
                     components: {
                         include: {
-                            styles: true
+                            styles: {
+                                include: {
+                                    bgColor: true,
+                                    txtColor: true,
+                                    brdrColor: true,
+                                    radius: true,
+                                    pdX: true,
+                                    pdY: true,
+
+                                }
+                            }
                         }
                     }
                 }

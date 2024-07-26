@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { useRouter } from "next/router";
+import Router from "next/router";
 import Link from "next/link";
-import { getSession } from "next-auth/react";
-import Image from "next/image";
+import { getServerSession } from "next-auth";
 
 export default function Signup() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const router = useRouter();
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -22,7 +20,7 @@ export default function Signup() {
     });
 
     if (res.ok) {
-      router.push("/auth/signin");
+      Router.replace("/auth/signin");
     }
   };
 
@@ -75,7 +73,7 @@ export default function Signup() {
             type="submit"
             className="px-6 py-2 mt-4 text-white bg-black rounded-lg hover:bg-gray-700 w-full"
           >
-            Continue to figr
+            Register
           </button>
 
           <div className="flex justify-center">
@@ -92,9 +90,9 @@ export default function Signup() {
     </div>
   );
 }
+export async function getServerSideProps({ req, res }) {
+  const session = await getServerSession(req, res);
 
-export async function getServerSideProps(context) {
-  const session = await getSession(context);
   if (session) {
     return {
       redirect: {

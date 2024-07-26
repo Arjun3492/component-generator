@@ -49,7 +49,7 @@ const RadiusTab = () => {
           setNewValue: setRadius,
         });
       }
-      setRadius({ id: "", label: "", value: "2px" }); // Reset form
+      setRadius({ id: "", label: "", value: "2px" });
     } catch (error) {
       console.error("Error submitting radius:", error);
     }

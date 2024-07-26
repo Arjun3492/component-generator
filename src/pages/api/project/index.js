@@ -23,7 +23,6 @@ export default async function handler(req, res) {
             });
             return res.status(200).json(projects);
         } catch (error) {
-            console.log(error);
             return res.status(500).json({ error: "Failed to fetch projects" });
         } finally {
             await prisma.$disconnect();
@@ -51,11 +50,9 @@ export default async function handler(req, res) {
             });
             return res.status(201).json(newProject);
         } catch (error) {
-            console.log(error);
             return res.status(500).json({ error: "Failed to create project" });
         }
         finally {
-            console.log("Disconnecting Prisma Client");
             await prisma.$disconnect();
         }
     }
