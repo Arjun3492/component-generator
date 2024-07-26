@@ -8,6 +8,8 @@ export const ComponentProvider = ({ children }) => {
 
 
 
+
+
     const createComponent = useCallback(async ({ type, variant, styles, setCurrentProject }) => {
         try {
             const res = await fetch(`/api/component?type=${type}&projectId=${currentProject.id}`, {
