@@ -1,141 +1,147 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useProject } from "@/context/projectContext";
-import { inputSubComponents } from "@/utils/constants";
-import { useComponent } from "@/context/componentContext";
+import { defaultValues, inputSubComponents } from "@/utils/constants";
 
 const RadioInputTab = () => {
-  const dummyOptions = ["Option 1", "Option 2", "Option 3"];
-  const defaultStyles = {
-    backgroundColor: "",
-    textColor: "",
-    borderColor: "",
-    borderRadius: "",
-    paddingX: "",
-    paddingY: "",
+  const defaultRadioInput = {
+    radioInputName: "",
+    ...defaultValues,
   };
-  const [styles, setStyles] = useState(defaultStyles);
-  const [currentProject, setCurrentProject] = useState(null);
-  const [radioName, setRadioName] = useState("");
-  const { fetchProjectWithAttributes } = useProject();
-  const { createComponent, editComponent } = useComponent();
+  const { projectData, createComponent, editComponent } = useProject();
+  const [radioInputData, setRadioInputData] = useState(defaultRadioInput);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-
-  const handleStyleChange = (e) => {
-    const { name, value } = e.target;
-    setStyles((prevStyles) => ({ ...prevStyles, [name]: value }));
-  };
-
-  const fetchRadios = useCallback(async () => {
-    try {
-      const data = await fetchProjectWithAttributes({
-        type: inputSubComponents.radio,
-      });
-      if (data) {
-        setCurrentProject(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch radio inputs:", error);
-    }
-  }, [fetchProjectWithAttributes]);
+  const [inputs, setInputs] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchRadios();
-  }, [fetchRadios]);
+    if (projectData && projectData.components) {
+      setInputs(
+        projectData.components.filter(
+          (component) => component.type === inputSubComponents.radio
+        )
+      );
+    }
+  }, [projectData]);
 
-  const handleCreateRadio = async () => {
+  const { colorMap, radiusMap, spacingMap } = useMemo(() => {
+    if (!projectData) return {};
+    return {
+      colorMap: projectData.colors
+        ? projectData.colors.reduce((acc, color) => {
+            acc[color.id] = color.value;
+            return acc;
+          }, {})
+        : {},
+      radiusMap: projectData.radii
+        ? projectData.radii.reduce((acc, radius) => {
+            acc[radius.id] = radius.value;
+            return acc;
+          }, {})
+        : {},
+      spacingMap: projectData.spacings
+        ? projectData.spacings.reduce((acc, spacing) => {
+            acc[spacing.id] = spacing.value;
+            return acc;
+          }, {})
+        : {},
+    };
+  }, [projectData]);
+
+  const handleStyleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      setRadioInputData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    },
+    [setRadioInputData]
+  );
+
+  const handleCreateRadioInput = async () => {
     try {
       setLoading(true);
+      const { id, radioInputName, ...styles } = radioInputData;
       await createComponent({
         type: inputSubComponents.radio,
-        variant: radioName,
-        styles,
-        components: currentProject.components,
-        setCurrentProject,
+        variant: radioInputName,
+        styles: styles,
       });
-      setStyles(defaultStyles);
-      setRadioName("");
+      setRadioInputData(defaultRadioInput);
+      setError(null);
     } catch (error) {
-      console.error("Failed to create radio input:", error);
+      setError("Failed to create radio input. Please try again.");
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEditRadio = async () => {
+  const handleEditRadioInput = async () => {
     try {
       setLoading(true);
-      const radioToEdit = currentProject.components.find(
-        (radio) => radio.variant === radioName
-      );
-      if (radioToEdit) {
-        await editComponent({
-          id: radioToEdit.id,
-          type: inputSubComponents.radio,
-          variant: radioName,
-          styles,
-          components: currentProject.components,
-          setCurrentProject,
-        });
-        setIsEditing(false);
-        setStyles(defaultStyles);
-        setRadioName("");
-      }
+      const { componentId, radioInputName, ...styles } = radioInputData;
+      await editComponent({
+        id: componentId,
+        type: inputSubComponents.radio,
+        variant: radioInputName,
+        styles: styles,
+      });
+      setRadioInputData(defaultRadioInput);
+      setIsEditing(false);
+      setError(null);
     } catch (error) {
-      console.error("Failed to edit radio input:", error);
+      setError("Failed to edit radio input. Please try again.");
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOnClickEdit = (radio) => {
-    setRadioName(radio.variant);
-    setStyles(radio.styles);
+  const handleOnClickEdit = (radioInput) => {
+    setRadioInputData({
+      radioInputName: radioInput.variant,
+      ...radioInput.styles,
+    });
     setIsEditing(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    isEditing ? handleEditRadio() : handleCreateRadio();
+    isEditing ? await handleEditRadioInput() : await handleCreateRadioInput();
   };
 
   return (
     <div>
-      {currentProject && (
+      {projectData && (
         <>
           <div>
             <h3 className="text-lg font-bold mb-4">Existing Radio Inputs</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {currentProject.components.map((radio) => (
-                <div key={radio.id} className="flex items-center gap-2">
-                  <div>
-                    {dummyOptions.map((option, index) => (
-                      <div className="flex items-center space-x-4" key={index}>
-                        <label
-                          style={{
-                            backgroundColor: radio.styles.backgroundColor,
-                            color: radio.styles.textColor,
-                            borderColor: radio.styles.borderColor,
-                            borderRadius: radio.styles.borderRadius,
-                            padding: `${radio.styles.paddingY} ${radio.styles.paddingX}`,
-                          }}
-                          className="border px-2 py-1"
-                        >
-                          <input
-                            type="radio"
-                            name={option}
-                            value={option}
-                            className="mr-2"
-                          />
-                          {option}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+              {inputs.map((input) => (
+                <div
+                  key={input.id}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <label
+                    className="block mb-2"
+                    style={{
+                      color: colorMap[input.styles.textColor],
+                      backgroundColor: colorMap[input.styles.backgroundColor],
+                      borderColor: colorMap[input.styles.borderColor],
+                      borderRadius: radiusMap[input.styles.borderRadius],
+                      padding: `${spacingMap[input.styles.paddingY]} ${
+                        spacingMap[input.styles.paddingX]
+                      }`,
+                    }}
+                  >
+                    <input type="radio" disabled />
+                    {input.variant || "Preview"}
+                  </label>
                   <button
-                    className="border-none text-blue-500"
-                    onClick={() => handleOnClickEdit(radio)}
-                    aria-label={`Edit ${radio.variant}`}
+                    className="border-none"
+                    onClick={() => handleOnClickEdit(input)}
                   >
                     ✎
                   </button>
@@ -145,30 +151,21 @@ const RadioInputTab = () => {
           </div>
           <h3 className="text-lg font-bold mb-4">Radio Input Styles</h3>
           <div className="mb-6">
-            <div>
-              {dummyOptions.map((option, index) => (
-                <div className="flex items-center space-x-4" key={index}>
-                  <label
-                    style={{
-                      backgroundColor: styles.backgroundColor,
-                      color: styles.textColor,
-                      borderColor: styles.borderColor,
-                      borderRadius: styles.borderRadius,
-                      padding: `${styles.paddingY} ${styles.paddingX}`,
-                    }}
-                    className="border px-2 py-1"
-                  >
-                    <input
-                      type="radio"
-                      name={option}
-                      value={option}
-                      className="mr-2"
-                    />
-                    {option}
-                  </label>
-                </div>
-              ))}
-            </div>
+            <label
+              className="block mb-2"
+              style={{
+                color: colorMap[radioInputData.textColor],
+                backgroundColor: colorMap[radioInputData.backgroundColor],
+                borderColor: colorMap[radioInputData.borderColor],
+                borderRadius: radiusMap[radioInputData.borderRadius],
+                padding: `${spacingMap[radioInputData.paddingY]} ${
+                  spacingMap[radioInputData.paddingX]
+                }`,
+              }}
+            >
+              <input type="radio" disabled />
+              {radioInputData.radioInputName || "Preview"}
+            </label>
           </div>
           <form
             onSubmit={handleSubmit}
@@ -178,44 +175,49 @@ const RadioInputTab = () => {
               <label className="block mb-2">Radio Input Name</label>
               <input
                 type="text"
-                value={radioName}
-                onChange={(e) => setRadioName(e.target.value)}
+                value={radioInputData.radioInputName}
+                onChange={(e) =>
+                  setRadioInputData({
+                    ...radioInputData,
+                    radioInputName: e.target.value,
+                  })
+                }
                 required
                 readOnly={isEditing}
                 className="w-full px-4 py-2 border rounded-md"
               />
             </div>
             <div>
-              <label className="block mb-2">Background Color</label>
+              <label className="block mb-2">Text Color</label>
               <select
-                name="backgroundColor"
-                value={styles.backgroundColor}
+                name="textColor"
+                value={radioInputData.textColor}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
                   Select a color
                 </option>
-                {currentProject.colors.map((color) => (
-                  <option key={color.id} value={color.value}>
+                {projectData.colors.map((color) => (
+                  <option key={color.id} value={color.id}>
                     {color.label}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block mb-2">Text Color</label>
+              <label className="block mb-2">Background Color</label>
               <select
-                name="textColor"
-                value={styles.textColor}
+                name="backgroundColor"
+                value={radioInputData.backgroundColor}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
-                  Select a text color
+                  Select a color
                 </option>
-                {currentProject.colors.map((color) => (
-                  <option key={color.id} value={color.value}>
+                {projectData.colors.map((color) => (
+                  <option key={color.id} value={color.id}>
                     {color.label}
                   </option>
                 ))}
@@ -225,15 +227,15 @@ const RadioInputTab = () => {
               <label className="block mb-2">Border Color</label>
               <select
                 name="borderColor"
-                value={styles.borderColor}
+                value={radioInputData.borderColor}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
                   Select a border color
                 </option>
-                {currentProject.colors.map((color) => (
-                  <option key={color.id} value={color.value}>
+                {projectData.colors.map((color) => (
+                  <option key={color.id} value={color.id}>
                     {color.label}
                   </option>
                 ))}
@@ -243,15 +245,15 @@ const RadioInputTab = () => {
               <label className="block mb-2">Border Radius</label>
               <select
                 name="borderRadius"
-                value={styles.borderRadius}
+                value={radioInputData.borderRadius}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
                   Select a border radius
                 </option>
-                {currentProject.radii.map((radius) => (
-                  <option key={radius.id} value={radius.value}>
+                {projectData.radii.map((radius) => (
+                  <option key={radius.id} value={radius.id}>
                     {radius.label}
                   </option>
                 ))}
@@ -261,15 +263,15 @@ const RadioInputTab = () => {
               <label className="block mb-2">Padding X</label>
               <select
                 name="paddingX"
-                value={styles.paddingX}
+                value={radioInputData.paddingX}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
                   Select horizontal padding
                 </option>
-                {currentProject.spacings.map((spacing) => (
-                  <option key={spacing.id} value={spacing.value}>
+                {projectData.spacings.map((spacing) => (
+                  <option key={spacing.id} value={spacing.id}>
                     {spacing.label}
                   </option>
                 ))}
@@ -279,15 +281,15 @@ const RadioInputTab = () => {
               <label className="block mb-2">Padding Y</label>
               <select
                 name="paddingY"
-                value={styles.paddingY}
+                value={radioInputData.paddingY}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
                   Select vertical padding
                 </option>
-                {currentProject.spacings.map((spacing) => (
-                  <option key={spacing.id} value={spacing.value}>
+                {projectData.spacings.map((spacing) => (
+                  <option key={spacing.id} value={spacing.id}>
                     {spacing.label}
                   </option>
                 ))}

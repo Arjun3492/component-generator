@@ -23,6 +23,16 @@ export const tabs = {
 }
 
 
+export const defaultValues = {
+    backgroundColor: "",
+    textColor: "",
+    borderColor: "",
+    borderRadius: "",
+    paddingX: "",
+    paddingY: "",
+    id: "",
+}
+
 
 
 

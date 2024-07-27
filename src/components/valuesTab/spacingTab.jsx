@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { values } from "@/utils/constants";
-import { useValue } from "@/context/valueContext";
 import { useProject } from "@/context/projectContext";
 
 const predefinedSpacings = [
+  "2px",
   "4px",
   "8px",
   "12px",
@@ -20,12 +20,14 @@ const SpacingTab = () => {
   const [spacings, setSpacings] = useState([]);
   const [spacing, setSpacing] = useState({ id: "", label: "", value: "4px" });
   const [isEditing, setIsEditing] = useState(false);
-  const { fetchValue, createValue, editValue } = useValue();
-  const { currentProject } = useProject();
+  const { projectData, createValue, editValue } = useProject();
 
   useEffect(() => {
-    fetchValue({ value: values.spacing, setValue: setSpacings });
-  }, [currentProject]);
+    // Fetch spacings data
+    if (projectData?.spacings) {
+      setSpacings(projectData.spacings);
+    }
+  }, [projectData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,18 +37,16 @@ const SpacingTab = () => {
           value: values.spacing,
           id: spacing.id,
           currentValue: spacings,
-          setValue: setSpacings,
           newValue: spacing,
-          setNewValue: setSpacing,
+          setValue: setSpacings,
         });
         setIsEditing(false);
       } else {
         await createValue({
           value: values.spacing,
           currentValue: spacings,
-          setValue: setSpacings,
           newValue: spacing,
-          setNewValue: setSpacing,
+          setValue: setSpacings,
         });
       }
       setSpacing({ id: "", label: "", value: "4px" });
@@ -69,13 +69,17 @@ const SpacingTab = () => {
             type="text"
             placeholder="Label"
             value={spacing.label}
-            onChange={(e) => setSpacing({ ...spacing, label: e.target.value })}
+            onChange={(e) =>
+              setSpacing((prev) => ({ ...prev, label: e.target.value }))
+            }
             required
             className="px-4 py-2 border rounded-md"
           />
           <select
             value={spacing.value}
-            onChange={(e) => setSpacing({ ...spacing, value: e.target.value })}
+            onChange={(e) =>
+              setSpacing((prev) => ({ ...prev, value: e.target.value }))
+            }
             className="px-4 py-2 border rounded-md"
           >
             {predefinedSpacings.map((spacingValue) => (
@@ -92,12 +96,15 @@ const SpacingTab = () => {
           {isEditing ? "Edit Spacing" : "Add Spacing"}
         </button>
       </form>
-      <ul>
+      <div className="grid grid-cols-3 gap-4 p-4">
         {spacings.length === 0 ? (
-          <li className="text-gray-500">No spacings available</li>
+          <div className="text-gray-500 col-span-3">No spacings available</div>
         ) : (
           spacings.map((spacing) => (
-            <li key={spacing.id} className="flex items-center space-x-2 mb-2">
+            <div
+              key={spacing.id}
+              className="flex items-center space-x-2 p-4 border rounded-md"
+            >
               <span className="w-20">{spacing.label}</span>
               <span
                 className="inline-block"
@@ -110,15 +117,15 @@ const SpacingTab = () => {
               </span>
               <button
                 type="button"
-                className="border-none text-blue-500"
+                className="border-none text-blue-500 hover:text-blue-700"
                 onClick={() => handleOnClickEdit(spacing)}
               >
                 Edit ✎
               </button>
-            </li>
+            </div>
           ))
         )}
-      </ul>
+      </div>
     </div>
   );
 };

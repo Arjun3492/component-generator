@@ -8,7 +8,7 @@ import { getServerSession } from "next-auth";
 
 const Page = () => {
   const [selectedTab, setSelectedTab] = useState(tabs.values);
-  const { projects } = useProject();
+  const { projects, projectData } = useProject();
 
 
   return (
@@ -29,6 +29,8 @@ const Page = () => {
                 Values
               </button>
               <button
+                disabled={!projectData}
+
                 onClick={() => setSelectedTab(tabs.components)}
                 className={`px-4 py-2 rounded-md ${selectedTab === tabs.components
                   ? "bg-blue-500 text-white"

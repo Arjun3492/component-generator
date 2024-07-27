@@ -1,107 +1,129 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useProject } from "@/context/projectContext";
-import { inputSubComponents } from "@/utils/constants";
-import { useComponent } from "@/context/componentContext";
+import { defaultValues, inputSubComponents } from "@/utils/constants";
 
 const TextInputTab = () => {
-  const defaultStyles = {
-    backgroundColor: "",
-    textColor: "",
-    borderColor: "",
-    borderRadius: "",
-    paddingX: "",
-    paddingY: "",
+  const { projectData, createComponent, editComponent } = useProject();
+  const defaultTextInput = {
+    textInputName: "",
+    ...defaultValues,
   };
-  const [styles, setStyles] = useState(defaultStyles);
-  const [currentProject, setCurrentProject] = useState(null);
-  const [inputName, setInputName] = useState("");
-  const { fetchProjectWithAttributes } = useProject();
-  const { createComponent, editComponent } = useComponent();
+  const [textInputData, setTextInputData] = useState(defaultTextInput);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [inputs, setInputs] = useState([]);
+
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    console.log("projectData changed");
+    if (projectData && projectData.components) {
+      console.log(
+        "updating text inputs",
+        projectData.components
+          .filter((component) => component.type === inputSubComponents.text)
+          .map((component) => component.styles.backgroundColor)
+      );
+      setInputs(
+        projectData.components.filter(
+          (component) => component.type === inputSubComponents.text
+        )
+      );
+    }
+  }, [projectData]);
+  const { colorMap, radiusMap, spacingMap } = useMemo(() => {
+    if (!projectData) return {};
+    return {
+      colorMap: projectData.colors
+        ? projectData.colors.reduce((acc, color) => {
+            acc[color.id] = color.value;
+            return acc;
+          }, {})
+        : {},
+      radiusMap: projectData.radii
+        ? projectData.radii.reduce((acc, radius) => {
+            acc[radius.id] = radius.value;
+            return acc;
+          }, {})
+        : {},
+      spacingMap: projectData.spacings
+        ? projectData.spacings.reduce((acc, spacing) => {
+            acc[spacing.id] = spacing.value;
+            return acc;
+          }, {})
+        : {},
+    };
+  }, [projectData]);
 
   const handleStyleChange = (e) => {
     const { name, value } = e.target;
-    setStyles((prevStyles) => ({ ...prevStyles, [name]: value }));
+    console.log(name, value);
+    setTextInputData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
-
-  const fetchInputs = useCallback(async () => {
-    try {
-      const data = await fetchProjectWithAttributes({
-        type: inputSubComponents.text,
-      });
-      setCurrentProject(data);
-    } catch (error) {
-      console.error("Failed to fetch inputs:", error);
-    }
-  }, [fetchProjectWithAttributes]);
-
-  useEffect(() => {
-    fetchInputs();
-  }, [fetchInputs]);
-
-  const handleCreateInput = async () => {
+  const handleCreateTextInput = async () => {
     try {
       setLoading(true);
+      const { id, textInputName, ...styles } = textInputData;
       await createComponent({
         type: inputSubComponents.text,
-        variant: inputName,
-        styles,
-        components: currentProject.components,
-        setCurrentProject,
+        variant: textInputName,
+        styles: styles,
       });
-      setStyles(defaultStyles);
-      setInputName("");
+      setTextInputData(defaultTextInput);
+      setError(null);
     } catch (error) {
-      console.error("Failed to create input:", error);
+      setError("Failed to create button. Please try again.");
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEditInput = async () => {
+  const handleEditTextInput = async () => {
     try {
       setLoading(true);
-      const inputToEdit = currentProject.components.find(
-        (input) => input.variant === inputName
-      );
+      const { componentId, textInputName, ...styles } = textInputData;
       await editComponent({
-        id: inputToEdit.id,
+        id: componentId,
         type: inputSubComponents.text,
-        variant: inputName,
-        styles,
-        components: currentProject.components,
-        setCurrentProject,
+        variant: textInputName,
+        styles: styles,
       });
+      setTextInputData(defaultTextInput);
       setIsEditing(false);
-      setStyles(defaultStyles);
-      setInputName("");
+      setError(null);
     } catch (error) {
-      console.error("Failed to edit input:", error);
+      setError("Failed to edit button. Please try again.");
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOnClickEdit = (input) => {
-    setInputName(input.variant);
-    setStyles(input.styles);
+  const handleOnClickEdit = (textInput) => {
+    setTextInputData({
+      textInputName: textInput.variant,
+      ...textInput.styles,
+    });
     setIsEditing(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    isEditing ? handleEditInput() : handleCreateInput();
+    isEditing ? await handleEditTextInput() : await handleCreateTextInput();
   };
 
   return (
     <div>
-      {currentProject && (
+      {projectData && (
         <>
           <div>
             <h3 className="text-lg font-bold mb-4">Existing Text Inputs</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {currentProject.components.map((input) => (
+              {inputs.map((input) => (
                 <div
                   key={input.id}
                   className="flex items-center justify-center gap-2"
@@ -110,11 +132,13 @@ const TextInputTab = () => {
                     type="text"
                     placeholder={input.variant}
                     style={{
-                      backgroundColor: input.styles.backgroundColor,
-                      color: input.styles.textColor,
-                      borderColor: input.styles.borderColor,
-                      borderRadius: input.styles.borderRadius,
-                      padding: `${input.styles.paddingY} ${input.styles.paddingX}`,
+                      backgroundColor: colorMap[input.styles.backgroundColor],
+                      color: colorMap[input.styles.textColor],
+                      borderColor: colorMap[input.styles.borderColor],
+                      borderRadius: radiusMap[input.styles.borderRadius],
+                      padding: `${spacingMap[input.styles.paddingY]} ${
+                        spacingMap[input.styles.paddingX]
+                      }`,
                     }}
                     className="border"
                   />
@@ -132,15 +156,16 @@ const TextInputTab = () => {
           <div className="mb-6">
             <input
               type="text"
-              placeholder={inputName || "Text Input Preview"}
+              disabled
+              placeholder={textInputData.textInputName || "Text Input Preview"}
               style={{
-                backgroundColor: styles.backgroundColor,
-                color: styles.textColor,
-                borderColor: styles.borderColor,
-                borderRadius: styles.borderRadius,
-                padding: `${styles.paddingY} ${styles.paddingX}`,
+                backgroundColor: colorMap[textInputData.backgroundColor],
+                borderColor: colorMap[textInputData.borderColor],
+                borderRadius: radiusMap[textInputData.borderRadius],
+                padding: `${spacingMap[textInputData.paddingY]} ${
+                  spacingMap[textInputData.paddingX]
+                }`,
               }}
-              className="border"
             />
           </div>
           <form
@@ -151,8 +176,13 @@ const TextInputTab = () => {
               <label className="block mb-2">Text Input Name</label>
               <input
                 type="text"
-                value={inputName}
-                onChange={(e) => setInputName(e.target.value)}
+                value={textInputData.textInputName}
+                onChange={(e) =>
+                  setTextInputData({
+                    ...textInputData,
+                    textInputName: e.target.value,
+                  })
+                }
                 required
                 readOnly={isEditing}
                 className="w-full px-4 py-2 border rounded-md"
@@ -162,15 +192,15 @@ const TextInputTab = () => {
               <label className="block mb-2">Background Color</label>
               <select
                 name="backgroundColor"
-                value={styles.backgroundColor}
+                value={textInputData.backgroundColor}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
                   Select a color
                 </option>
-                {currentProject.colors.map((color) => (
-                  <option key={color.id} value={color.value}>
+                {projectData.colors.map((color) => (
+                  <option key={color.id} value={color.id}>
                     {color.label}
                   </option>
                 ))}
@@ -180,15 +210,15 @@ const TextInputTab = () => {
               <label className="block mb-2">Text Color</label>
               <select
                 name="textColor"
-                value={styles.textColor}
+                value={textInputData.textColor}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
                   Select a text color
                 </option>
-                {currentProject.colors.map((color) => (
-                  <option key={color.id} value={color.value}>
+                {projectData.colors.map((color) => (
+                  <option key={color.id} value={color.id}>
                     {color.label}
                   </option>
                 ))}
@@ -198,15 +228,15 @@ const TextInputTab = () => {
               <label className="block mb-2">Border Color</label>
               <select
                 name="borderColor"
-                value={styles.borderColor}
+                value={textInputData.borderColor}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
                   Select a border color
                 </option>
-                {currentProject.colors.map((color) => (
-                  <option key={color.id} value={color.value}>
+                {projectData.colors.map((color) => (
+                  <option key={color.id} value={color.id}>
                     {color.label}
                   </option>
                 ))}
@@ -216,15 +246,15 @@ const TextInputTab = () => {
               <label className="block mb-2">Border Radius</label>
               <select
                 name="borderRadius"
-                value={styles.borderRadius}
+                value={textInputData.borderRadius}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
                   Select a border radius
                 </option>
-                {currentProject.radii.map((radius) => (
-                  <option key={radius.id} value={radius.value}>
+                {projectData.radii.map((radius) => (
+                  <option key={radius.id} value={radius.id}>
                     {radius.label}
                   </option>
                 ))}
@@ -234,15 +264,15 @@ const TextInputTab = () => {
               <label className="block mb-2">Padding X</label>
               <select
                 name="paddingX"
-                value={styles.paddingX}
+                value={textInputData.paddingX}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
                   Select horizontal padding
                 </option>
-                {currentProject.spacings.map((spacing) => (
-                  <option key={spacing.id} value={spacing.value}>
+                {projectData.spacings.map((spacing) => (
+                  <option key={spacing.id} value={spacing.id}>
                     {spacing.label}
                   </option>
                 ))}
@@ -252,20 +282,18 @@ const TextInputTab = () => {
               <label className="block mb-2">Padding Y</label>
               <select
                 name="paddingY"
-                value={styles.paddingY}
+                value={textInputData.paddingY}
                 onChange={handleStyleChange}
                 className="w-full px-4 py-2 border rounded-md"
               >
                 <option value="" disabled hidden>
                   Select vertical padding
                 </option>
-                {currentProject &&
-                  currentProject.spacings &&
-                  currentProject.spacings.map((spacing) => (
-                    <option key={spacing.id} value={spacing.value}>
-                      {spacing.label}
-                    </option>
-                  ))}
+                {projectData.spacings.map((spacing) => (
+                  <option key={spacing.id} value={spacing.id}>
+                    {spacing.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

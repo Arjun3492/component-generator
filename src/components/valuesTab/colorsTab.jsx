@@ -1,37 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { values } from "@/utils/constants";
-import { useValue } from "@/context/valueContext";
 import { useProject } from "@/context/projectContext";
 
 const ColorsTab = () => {
-  const [colors, setColors] = useState([]);
   const [color, setColor] = useState({ id: "", label: "", value: "#000000" });
   const [isEditing, setIsEditing] = useState(false);
-  const { fetchValue, createValue, editValue } = useValue();
-  const { currentProject } = useProject();
-
-  useEffect(() => {
-    fetchValue({ value: values.color, setValue: setColors });
-  }, [currentProject]);
+  const { projectData, createValue, editValue } = useProject();
+  const colors = projectData?.colors || [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!color.label || !color.value) return;
+
     isEditing
-      ? editValue({
+      ? await editValue({
           value: values.color,
           id: color.id,
           currentValue: colors,
-          setValue: setColors,
           newValue: color,
-          setNewValue: setColor,
         })
-      : createValue({
+      : await createValue({
           value: values.color,
           currentValue: colors,
-          setValue: setColors,
           newValue: color,
-          setNewValue: setColor,
         });
+    setColor({ id: "", label: "", value: "#000000" });
   };
 
   const handleOnClickEdit = (color) => {
@@ -82,24 +75,29 @@ const ColorsTab = () => {
         </button>
       </form>
       <ul>
-        {colors.length === 0 ? (
+        {!colors.length ? (
           <li className="text-gray-500">No colors available</li>
         ) : (
-          colors.map((color) => (
-            <li key={color.id} className="flex items-center space-x-2 mb-2">
-              <span className="w-20">{color.label}</span>
-              <span
-                className="w-8 h-8 rounded"
-                style={{ backgroundColor: color.value }}
-              ></span>
-              <button
-                className=" border-none"
-                onClick={() => handleOnClickEdit(color)}
+          <div className="grid grid-cols-3 gap-4 p-4">
+            {colors.map((color) => (
+              <div
+                key={color.id}
+                className="flex items-center space-x-2 p-4 border rounded-md"
               >
-                Edit ✎
-              </button>
-            </li>
-          ))
+                <span className="w-20">{color.label}</span>
+                <span
+                  className="w-8 h-8 rounded"
+                  style={{ backgroundColor: color.value }}
+                ></span>
+                <button
+                  className="border-none text-blue-500 hover:text-blue-700"
+                  onClick={() => handleOnClickEdit(color)}
+                >
+                  Edit ✎
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </ul>
     </div>

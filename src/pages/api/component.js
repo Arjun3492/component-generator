@@ -65,7 +65,14 @@ async function createComponent(req, res) {
 
 async function updateComponent(req, res) {
     const prisma = new PrismaClient();
+    const { type, projectId } = req.query;
+
+    if (!type || !projectId) {
+        await prisma.$disconnect();
+        return res.status(400).json({ error: "Missing type or projectId" });
+    }
     const { id, variant, styles } = req.body;
+    console.log("id, variant", id, variant);
 
     if (!id || !variant || !styles) {
         await prisma.$disconnect();
@@ -74,7 +81,9 @@ async function updateComponent(req, res) {
 
     try {
         const updatedComponent = await prisma.componentStyle.update({
-            where: { componentId: Number(id) },
+            where: {
+                componentId: Number(id)
+            },
             data: {
                 bgColor: { connect: { id: Number(styles.backgroundColor) } },
                 txtColor: { connect: { id: Number(styles.textColor) } },
@@ -92,6 +101,8 @@ async function updateComponent(req, res) {
                 pdY: true,
             }
         });
+
+        console.log("updatedComponent", updatedComponent);
         return res.status(200).json(updatedComponent);
     } catch (error) {
         console.error("Error updating component:", error);

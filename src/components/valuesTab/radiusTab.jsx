@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { values } from "@/utils/constants";
-import { useValue } from "@/context/valueContext";
 import { useProject } from "@/context/projectContext";
 
 const predefinedRadii = [
@@ -17,15 +16,11 @@ const predefinedRadii = [
 ];
 
 const RadiusTab = () => {
-  const [radii, setRadii] = useState([]);
   const [radius, setRadius] = useState({ id: "", label: "", value: "2px" });
   const [isEditing, setIsEditing] = useState(false);
-  const { fetchValue, createValue, editValue } = useValue();
-  const { currentProject } = useProject();
+  const { projectData, createValue, editValue } = useProject();
 
-  useEffect(() => {
-    fetchValue({ value: values.radius, setValue: setRadii });
-  }, [currentProject]);
+  const radii = projectData?.radii || [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,18 +30,14 @@ const RadiusTab = () => {
           value: values.radius,
           id: radius.id,
           currentValue: radii,
-          setValue: setRadii,
           newValue: radius,
-          setNewValue: setRadius,
         });
         setIsEditing(false);
       } else {
         await createValue({
           value: values.radius,
           currentValue: radii,
-          setValue: setRadii,
           newValue: radius,
-          setNewValue: setRadius,
         });
       }
       setRadius({ id: "", label: "", value: "2px" });
@@ -69,13 +60,17 @@ const RadiusTab = () => {
             type="text"
             placeholder="Label"
             value={radius.label}
-            onChange={(e) => setRadius({ ...radius, label: e.target.value })}
+            onChange={(e) =>
+              setRadius((prev) => ({ ...prev, label: e.target.value }))
+            }
             required
             className="px-4 py-2 border rounded-md"
           />
           <select
             value={radius.value}
-            onChange={(e) => setRadius({ ...radius, value: e.target.value })}
+            onChange={(e) =>
+              setRadius((prev) => ({ ...prev, value: e.target.value }))
+            }
             className="px-4 py-2 border rounded-md"
           >
             {predefinedRadii.map((radiusValue) => (
@@ -92,31 +87,33 @@ const RadiusTab = () => {
           {isEditing ? "Edit Radius" : "Add Radius"}
         </button>
       </form>
-      <ul>
+      <div className="grid grid-cols-3 gap-4 p-4">
         {radii.length === 0 ? (
-          <li className="text-gray-500">No radii available</li>
+          <div className="text-gray-500 col-span-3">No radii available</div>
         ) : (
           radii.map((radius) => (
-            <li key={radius.id} className="flex items-center space-x-2 mb-2">
+            <div
+              key={radius.id}
+              className="flex items-center space-x-2 p-4 border rounded-md"
+            >
               <span className="w-20">{radius.label}</span>
               <span
-                className="w-6 h-6 border-4 border-black rounded-full  border-e-0 border-b-0 "
+                className="w-6 h-6 border-4 border-black rounded-full border-e-0 border-b-0"
                 style={{ borderRadius: radius.value }}
               >
                 <span className="sr-only">Radius</span>
               </span>
-
               <button
                 type="button"
-                className="border-none text-blue-500"
+                className="border-none text-blue-500 hover:text-blue-700"
                 onClick={() => handleOnClickEdit(radius)}
               >
                 Edit ✎
               </button>
-            </li>
+            </div>
           ))
         )}
-      </ul>
+      </div>
     </div>
   );
 };
